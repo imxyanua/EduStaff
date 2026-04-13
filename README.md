@@ -27,7 +27,7 @@
 - **Quản lý khoa/bộ môn**: Tổ chức giảng viên theo khoa
 - **Quản lý lịch giảng dạy**: Phân công lịch dạy theo học kỳ, kiểm tra trùng lịch
 - **Quản lý tài khoản**: Tạo, phân quyền, khóa/mở tài khoản người dùng
-- **Phân quyền người dùng**: Admin, Nhân sự (Staff), Giảng viên (Lecturer)
+- **Phân quyền người dùng**: Admin và Nhân sự (Staff)
 - **Thống kê & báo cáo**: Thống kê theo khoa, học vị, chức vụ
 - **Xuất báo cáo**: Export danh sách giảng viên ra Excel và PDF
 - **Nhật ký hệ thống**: Ghi log đăng nhập, chỉnh sửa, xóa dữ liệu
@@ -39,7 +39,7 @@
 | Tính năng | Mô tả |
 |-----------|--------|
 | Bảo mật | JWT Authentication + bcrypt password hashing |
-| Phân quyền | Role-based Access Control (Admin / Staff / Lecturer) |
+| Phân quyền | Role-based Access Control (Admin / Staff) |
 | Giao diện | Desktop app hiện đại với dark theme |
 | Báo cáo | Export Excel + PDF danh sách giảng viên |
 | Thống kê | Thống kê GV theo khoa, học vị, chức vụ |
@@ -212,7 +212,7 @@ Khi khởi động lần đầu, hệ thống tự tạo dữ liệu test:
 | Tính năng | Trạng thái | Mô tả |
 |-----------|-----------|-------|
 | JWT Auth | Có | Xác thực bằng JSON Web Token |
-| RBAC (3 roles) | Có | Phân quyền Admin / Staff / Lecturer |
+| RBAC (2 roles) | Có | Phân quyền Admin / Staff |
 | Logging | Có | Ghi log hệ thống (file + console) |
 | Audit Logs | Có | Lịch sử đăng nhập/chỉnh sửa/xóa |
 | Export Excel | Có | Xuất danh sách GV ra .xlsx |
@@ -234,7 +234,6 @@ Khi khởi động lần đầu, hệ thống tự tạo dữ liệu test:
 | Quản trị viên hệ thống | admin | Quản lý toàn bộ hệ thống |
 | Phòng nhân sự | staff | Xem thông tin, xuất báo cáo |
 | Ban giám hiệu | staff | Xem thống kê, báo cáo |
-| Giảng viên | lecturer | Xem lịch giảng dạy cá nhân |
 ---
 
 ## Ghi Chú Phát Triển
@@ -257,10 +256,23 @@ Khi khởi động lần đầu, hệ thống tự tạo dữ liệu test:
 
 ---
 
+### Hình ảnh phác thảo (chèn vào đây)   
+Vào GitHub repo
+
+Add file → Upload files
+
+Upload ảnh vào assets/images
+ví dụ:  
+
+![Sao Lưu & Phục Hồi Dữ Liệu](assets/SaoLuu_PhucHoi.png)   
+Sao Lưu & Phục Hồi Dữ Liệu 
+
+
 ## Contributor
 
 - xyanua. - maintainer & developer
-
+- Huy12-05 - developer
+- pmhieu2004 - developer
 ## License
 
 MIT License — Free for educational and commercial use.
