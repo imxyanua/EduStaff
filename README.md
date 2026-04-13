@@ -26,8 +26,12 @@
 - **Quản lý giảng viên**: Thêm, sửa, xóa, tìm kiếm thông tin giảng viên
 - **Quản lý khoa/bộ môn**: Tổ chức giảng viên theo khoa
 - **Quản lý lịch giảng dạy**: Phân công lịch dạy theo học kỳ, kiểm tra trùng lịch
-- **Phân quyền người dùng**: Admin và Staff với quyền hạn khác nhau
-- **Xuất báo cáo**: Export danh sách giảng viên ra file Excel
+- **Quản lý tài khoản**: Tạo, phân quyền, khóa/mở tài khoản người dùng
+- **Phân quyền người dùng**: Admin, Nhân sự (Staff), Giảng viên (Lecturer)
+- **Thống kê & báo cáo**: Thống kê theo khoa, học vị, chức vụ
+- **Xuất báo cáo**: Export danh sách giảng viên ra Excel và PDF
+- **Nhật ký hệ thống**: Ghi log đăng nhập, chỉnh sửa, xóa dữ liệu
+- **Sao lưu dữ liệu**: Backup/Restore database
 - **Dashboard**: Tổng quan thống kê nhanh
 
 ### Đặc điểm nổi bật
@@ -35,11 +39,15 @@
 | Tính năng | Mô tả |
 |-----------|--------|
 | Bảo mật | JWT Authentication + bcrypt password hashing |
-| Phân quyền | Role-based Access Control (Admin / Staff) |
+| Phân quyền | Role-based Access Control (Admin / Staff / Lecturer) |
 | Giao diện | Desktop app hiện đại với dark theme |
-| Báo cáo | Export Excel danh sách giảng viên |
+| Báo cáo | Export Excel + PDF danh sách giảng viên |
+| Thống kê | Thống kê GV theo khoa, học vị, chức vụ |
+| Nhật ký | Audit logs ghi lịch sử login/edit/delete |
 | Logging | Ghi log hệ thống cho debug và giám sát |
+| Backup | Sao lưu và phục hồi database |
 | Docker | Hỗ trợ Docker cho backend + MySQL |
+
 
 ---
 
@@ -56,14 +64,14 @@ Hệ thống được tách thành **2 service độc lập**, giao tiếp qua H
 │  ┌───────────────────┐  │    POST /api/lecturers     │  ┌───────────────────┐  │
 │  │   Login Screen    │  │    PUT  /api/lecturers/1   │  │   Routers         │  │
 │  │   Dashboard       │  │    DELETE /api/lecturers/1 │  │   Services        │  │
-│  │   Lecturer Mgmt   │  │    ...                     │  │   Models          │  │
-│  │   Department Mgmt │  │                            │  │   Schemas         │  │
-│  │   Schedule Mgmt   │  │                            │  └───────┬───────────┘  │
-│  └───────────────────┘  │                            │          │              │
-│                         │                            │          ▼              │
-└─────────────────────────┘                            │  ┌───────────────────┐  │
-                                                       │  │   MySQL Database  │  │
-                                                       │  └───────────────────┘  │
+│  │   Lecturer Mgmt   │  │    GET  /api/stats/*       │  │   Models          │  │
+│  │   Department Mgmt │  │    GET  /api/audit-logs    │  │   Schemas         │  │
+│  │   Schedule Mgmt   │  │    POST /api/backup/*      │  └───────┬───────────┘  │
+│  │   Account Mgmt    │  │    ...                     │          │              │
+│  │   Audit Logs      │  │                            │          ▼              │
+│  └───────────────────┘  │                            │  ┌───────────────────┐  │
+│                         │                            │  │   MySQL Database  │  │
+└─────────────────────────┘                            │  └───────────────────┘  │
                                                        └─────────────────────────┘
 ```
 
@@ -74,6 +82,7 @@ Hệ thống được tách thành **2 service độc lập**, giao tiếp qua H
 3. **Stateless Authentication**: JWT token, không lưu session trên server
 4. **Tách logic khỏi UI**: Frontend tách rõ lớp API client, UI components, và screens
 5. **Module hóa Backend**: Routers → Services → Models, dễ mở rộng
+6. **Audit Trail**: Mọi thao tác quan trọng đều được ghi log
 
 ---
 
@@ -92,6 +101,7 @@ Hệ thống được tách thành **2 service độc lập**, giao tiếp qua H
 | Validation | Pydantic | 2.0+ |
 | Server | Uvicorn | 0.29+ |
 | Excel Export | openpyxl | 3.1+ |
+| PDF Export | reportlab | 4.1+ |
 
 ### Frontend
 
@@ -202,14 +212,29 @@ Khi khởi động lần đầu, hệ thống tự tạo dữ liệu test:
 | Tính năng | Trạng thái | Mô tả |
 |-----------|-----------|-------|
 | JWT Auth | Có | Xác thực bằng JSON Web Token |
-| RBAC | Có | Phân quyền Admin / Staff |
+| RBAC (3 roles) | Có | Phân quyền Admin / Staff / Lecturer |
 | Logging | Có | Ghi log hệ thống (file + console) |
+| Audit Logs | Có | Lịch sử đăng nhập/chỉnh sửa/xóa |
 | Export Excel | Có | Xuất danh sách GV ra .xlsx |
+| Export PDF | Có | Xuất danh sách GV ra .pdf |
+| Thống kê | Có | Theo khoa, học vị, chức vụ |
+| Quản lý TK | Có | CRUD + khóa/mở tài khoản |
+| Backup/Restore | Có | Sao lưu/phục hồi database |
 | Docker | Có | docker-compose cho backend + MySQL |
 | Seed Data | Có | Dữ liệu mẫu tự động |
-| Search & Filter | Có | Tìm kiếm, lọc theo khoa |
+| Search & Filter | Có | Tìm kiếm, lọc theo khoa/học vị/chức vụ |
 | Pagination | Có | Phân trang danh sách |
 
+---
+
+## Đối Tượng Sử Dụng
+
+| Đối tượng | Role | Mô tả |
+|-----------|------|-------|
+| Quản trị viên hệ thống | admin | Quản lý toàn bộ hệ thống |
+| Phòng nhân sự | staff | Xem thông tin, xuất báo cáo |
+| Ban giám hiệu | staff | Xem thống kê, báo cáo |
+| Giảng viên | lecturer | Xem lịch giảng dạy cá nhân |
 ---
 
 ## Ghi Chú Phát Triển
