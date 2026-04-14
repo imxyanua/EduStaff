@@ -234,11 +234,11 @@ Quản Lý Khoa
 ![Quản Lý Lịch Giảng Dạy](assets/Quanlylichgiangday.jpg)
 Quản Lý Lịch Giảng Dạy
 
-![Thêm Lịch Giảng Dạy](assets/themlichgiangday.jpg)
-Thêm Lịch Giảng Dạy
-
 ![Quản Lý Tài Khoản](assets/Quanlytaikhoan.jpg)
 Quản Lý Tài Khoản
+
+![Thêm Lịch Giảng Dạy](assets/themlichgiangday.jpg)
+Thêm Lịch Giảng Dạy
 =======
 >>>>>>> c7f0427af015f136b04f3116cfc16edbfd1d088f
 
