@@ -267,6 +267,18 @@ ví dụ:
 ![Sao Lưu & Phục Hồi Dữ Liệu](assets/SaoLuu_PhucHoi.png)   
 Sao Lưu & Phục Hồi Dữ Liệu 
 
+![Giao diện đăng nhập](assets/Giaodiendangnhap.png)
+Giao diện đăng nhập
+
+![Main Window & Sidebar](assets/MainWindow&Sidebar.png)
+Main Window & Sidebar
+
+![SideBar chi tiết](Sidebarchitiet.png)
+
+![Thêm sửa giảng viên](ThemSuaGiangVien.png)
+
+![Xem chi tiết giảng viên](XemChiTietGiangVien.png)
+
 
 ## Contributor
 
