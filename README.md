@@ -1,258 +1,215 @@
 # EduStaff — Hệ Thống Quản Lý Giảng Viên Đại Học
 
-> Phần mềm quản lý giảng viên dành cho các trường đại học, được xây dựng theo kiến trúc tách service với Backend REST API và Frontend Desktop Application.
+> Phần mềm **desktop** quản lý giảng viên dành cho các trường đại học.  
+> Xây dựng bằng **PySide6 + SQLAlchemy** theo kiến trúc phân tầng (Layered Architecture).  
+> Không dùng web server — chạy bằng một lệnh duy nhất.
 
 ---
 
 ## Mục Lục
 
-- [Tổng Quan](#-tổng-quan)
-- [Kiến Trúc Hệ Thống](#-kiến-trúc-hệ-thống)
-- [Công Nghệ Sử Dụng](#-công-nghệ-sử-dụng)
-- [Cấu Trúc Dự Án](#-cấu-trúc-dự-án)
-- [Thiết Kế Database](#-thiết-kế-database)
-- [API Endpoints](#-api-endpoints)
-- [Hướng Dẫn Cài Đặt](#-hướng-dẫn-cài-đặt)
-- [Hướng Dẫn Chạy](#-hướng-dẫn-chạy)
-- [Tài Khoản Mặc Định](#-tài-khoản-mặc-định)
-- [Tính Năng Nâng Cao](#-tính-năng-nâng-cao)
+- [Tổng Quan](#tổng-quan)
+- [Kiến Trúc Hệ Thống](#kiến-trúc-hệ-thống)
+- [Công Nghệ Sử Dụng](#công-nghệ-sử-dụng)
+- [Cấu Trúc Dự Án](#cấu-trúc-dự-án)
+- [Thiết Kế Database](#thiết-kế-database)
+- [Phân Quyền Hệ Thống](#phân-quyền-hệ-thống)
+- [Hướng Dẫn Cài Đặt](#hướng-dẫn-cài-đặt)
+- [Hướng Dẫn Chạy](#hướng-dẫn-chạy)
+- [Tài Khoản Mặc Định](#tài-khoản-mặc-định)
+- [Tính Năng](#tính-năng)
 
 ---
 
 ## Tổng Quan
 
-**EduStaff** là hệ thống phần mềm quản lý giảng viên trong trường đại học, hỗ trợ các nghiệp vụ:
+**EduStaff** là ứng dụng desktop quản lý giảng viên trong trường đại học, hỗ trợ các nghiệp vụ:
 
 - **Quản lý giảng viên**: Thêm, sửa, xóa, tìm kiếm thông tin giảng viên
 - **Quản lý khoa/bộ môn**: Tổ chức giảng viên theo khoa
 - **Quản lý lịch giảng dạy**: Phân công lịch dạy theo học kỳ, kiểm tra trùng lịch
 - **Quản lý tài khoản**: Tạo, phân quyền, khóa/mở tài khoản người dùng
-- **Phân quyền người dùng**: Admin và Nhân sự (Staff)
 - **Thống kê & báo cáo**: Thống kê theo khoa, học vị, chức vụ
 - **Xuất báo cáo**: Export danh sách giảng viên ra Excel và PDF
 - **Nhật ký hệ thống**: Ghi log đăng nhập, chỉnh sửa, xóa dữ liệu
-- **Sao lưu dữ liệu**: Backup/Restore database
-- **Dashboard**: Tổng quan thống kê nhanh
-
-### Đặc điểm nổi bật
+- **Sao lưu dữ liệu**: Backup / Restore database
 
 | Tính năng | Mô tả |
 |-----------|--------|
-| Bảo mật | JWT Authentication + bcrypt password hashing |
+| Bảo mật | bcrypt password hashing + session phiên làm việc |
 | Phân quyền | Role-based Access Control (Admin / Staff) |
-| Giao diện | Desktop app hiện đại với dark theme |
+| Giao diện | Desktop app hiện đại với dark theme (Qt6) |
 | Báo cáo | Export Excel + PDF danh sách giảng viên |
-| Thống kê | Thống kê GV theo khoa, học vị, chức vụ |
-| Nhật ký | Audit logs ghi lịch sử login/edit/delete |
-| Logging | Ghi log hệ thống cho debug và giám sát |
+| Thống kê | Theo khoa, học vị, chức vụ |
+| Nhật ký | Audit logs — lịch sử login / edit / delete |
 | Backup | Sao lưu và phục hồi database |
-| Docker | Hỗ trợ Docker cho backend + MySQL |
-
 
 ---
 
 ## Kiến Trúc Hệ Thống
 
-Hệ thống được tách thành **2 service độc lập**, giao tiếp qua HTTP/JSON:
+Ứng dụng được xây dựng theo **Layered Architecture** (kiến trúc phân tầng 5 tầng):
 
 ```
-┌─────────────────────────┐         HTTP/JSON         ┌─────────────────────────┐
-│                         │ ◄──────────────────────►   │                         │
-│   Frontend (PySide6)    │                            │   Backend (FastAPI)     │
-│   Desktop Application   │    POST /api/auth/login    │   REST API Server      │
-│                         │    GET  /api/lecturers     │                         │
-│  ┌───────────────────┐  │    POST /api/lecturers     │  ┌───────────────────┐  │
-│  │   Login Screen    │  │    PUT  /api/lecturers/1   │  │   Routers         │  │
-│  │   Dashboard       │  │    DELETE /api/lecturers/1 │  │   Services        │  │
-│  │   Lecturer Mgmt   │  │    GET  /api/stats/*       │  │   Models          │  │
-│  │   Department Mgmt │  │    GET  /api/audit-logs    │  │   Schemas         │  │
-│  │   Schedule Mgmt   │  │    POST /api/backup/*      │  └───────┬───────────┘  │
-│  │   Account Mgmt    │  │    ...                     │          │              │
-│  │   Audit Logs      │  │                            │          ▼              │
-│  └───────────────────┘  │                            │  ┌───────────────────┐  │
-│                         │                            │  │   MySQL Database  │  │
-└─────────────────────────┘                            │  └───────────────────┘  │
-                                                       └─────────────────────────┘
+╔══════════════════════════════════════════════════════╗
+║         PRESENTATION LAYER — ui/screens/             ║
+║  PySide6 Screens · Windows · Dialogs · Widgets       ║
+╠══════════════════════════════════════════════════════╣
+║         CONTROLLER LAYER — controllers/              ║
+║  Nhận sự kiện UI, điều phối gọi Service              ║
+╠══════════════════════════════════════════════════════╣
+║         SERVICE LAYER — services/                    ║
+║  Business logic · Validation · Export · Backup       ║
+╠══════════════════════════════════════════════════════╣
+║         REPOSITORY LAYER — repositories/             ║
+║  SQLAlchemy queries · CRUD · Filter · Paginate       ║
+╠══════════════════════════════════════════════════════╣
+║         MODEL LAYER — models/                        ║
+║  SQLAlchemy ORM · Ánh xạ bảng MySQL                 ║
+╠══════════════════════════════════════════════════════╣
+║         DATABASE — MySQL 8.0                         ║
+║  SQLAlchemy Engine → PyMySQL → MySQL                 ║
+╚══════════════════════════════════════════════════════╝
 ```
 
-### Nguyên tắc thiết kế
+**Luồng xử lý điển hình:**
 
-1. **Tách biệt Frontend/Backend**: Frontend không truy cập trực tiếp database
-2. **RESTful API**: Giao tiếp hoàn toàn qua HTTP JSON
-3. **Stateless Authentication**: JWT token, không lưu session trên server
-4. **Tách logic khỏi UI**: Frontend tách rõ lớp API client, UI components, và screens
-5. **Module hóa Backend**: Routers → Services → Models, dễ mở rộng
-6. **Audit Trail**: Mọi thao tác quan trọng đều được ghi log
+```
+[User bấm "Thêm Giảng Viên"]
+        ↓
+[LecturerScreen]      → gom dữ liệu form
+        ↓
+[LecturerController]  → validate input cơ bản
+        ↓
+[LecturerService]     → kiểm tra business rules, ghi audit log
+        ↓
+[LecturerRepository]  → db.add() · db.commit()
+        ↓
+[MySQL]               → INSERT INTO lecturers ...
+        ↓
+[Kết quả trả lên]     → Controller cập nhật UI
+```
+
+**Quy tắc giữa các tầng — giao tiếp một chiều, không bỏ tầng:**
+
+| Tầng | Được gọi bởi | Được phép gọi |
+|------|-------------|---------------|
+| UI (screens) | User | Controller |
+| Controller | UI | Service |
+| Service | Controller | Repository |
+| Repository | Service | Model / SQLAlchemy |
+| Model | Repository | SQLAlchemy Core |
 
 ---
 
 ## Công Nghệ Sử Dụng
 
-### Backend
-
-| Thành phần | Công nghệ | Phiên bản |
-|------------|-----------|-----------|
-| Framework | FastAPI | 0.110+ |
-| ORM | SQLAlchemy | 2.0+ |
-| Database | MySQL | 8.0+ |
-| DB Driver | PyMySQL | 1.1+ |
-| Auth | python-jose (JWT) | 3.3+ |
-| Password Hash | passlib + bcrypt | 1.7+ |
-| Validation | Pydantic | 2.0+ |
-| Server | Uvicorn | 0.29+ |
-| Excel Export | openpyxl | 3.1+ |
-| PDF Export | reportlab | 4.1+ |
-
-### Frontend
-
 | Thành phần | Công nghệ | Phiên bản |
 |------------|-----------|-----------|
 | UI Framework | PySide6 (Qt6) | 6.6+ |
-| HTTP Client | requests | 2.31+ |
-| Excel | openpyxl | 3.1+ |
+| ORM | SQLAlchemy | 2.0+ |
+| DB Driver | PyMySQL | 1.1+ |
+| Database | MySQL | 8.0+ |
+| Password Hash | passlib + bcrypt | 1.7+ |
+| Excel Export | openpyxl | 3.1+ |
+| PDF Export | reportlab | 4.1+ |
+| Logging | Python logging | stdlib |
 
 ---
 
+## Hướng Dẫn Cài Đặt
 
+### Yêu cầu
 
-### Cài đặt Backend
+- Python 3.10+
+- MySQL 8.0+
+
+### 1. Clone project
 
 ```bash
-cd backend
+git clone https://github.com/imxyanua/EduStaff.git
+cd EduStaff
+```
+
+### 2. Tạo virtual environment
+
+```bash
 python -m venv venv
 
 # Windows
 venv\Scripts\activate
 
-# Linux/Mac
+# Linux / Mac
 source venv/bin/activate
 
 pip install -r requirements.txt
 ```
 
-Cấu hình file `.env`:
+### 3. Cấu hình `.env`
+
 ```env
-DATABASE_URL=mysql+pymysql://edustaff:edustaff_password@localhost:3306/edustaff
-JWT_SECRET_KEY=your-super-secret-key-change-in-production
-JWT_ALGORITHM=HS256
-JWT_EXPIRE_MINUTES=480
-```
-
-### Cài đặt Frontend
-
-```bash
-cd frontend
-python -m venv venv
-
-# Windows
-venv\Scripts\activate
-
-pip install -r requirements.txt
+DB_URL=mysql+pymysql://edustaff:edustaff_password@localhost:3306/edustaff
+APP_NAME=EduStaff
+LOG_LEVEL=INFO
 ```
 
 ---
 
 ## Hướng Dẫn Chạy
 
-### Chạy Backend
-
 ```bash
-cd backend
 # Activate venv
 venv\Scripts\activate
 
-# Chạy server (development)
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
-```
-
-Truy cập Swagger UI: [http://localhost:8000/docs](http://localhost:8000/docs)
-
-### Chạy Frontend
-
-```bash
-cd frontend
-# Activate venv
-venv\Scripts\activate
-
-# Chạy ứng dụng
+# Chạy ứng dụng (1 lệnh duy nhất)
 python main.py
 ```
 
-### Chạy bằng Docker (Backend + MySQL)
+Khi khởi động, `main.py` lần lượt thực hiện:
 
-```bash
-docker-compose up -d
-```
+1. Đọc cấu hình từ `.env`
+2. Khởi tạo SQLAlchemy engine, tạo tất cả bảng
+3. Chạy seed data nếu DB trống
+4. Khởi tạo `QApplication` với dark theme
+5. Hiển thị `LoginScreen`
 
 ---
 
 ## Tài Khoản Mặc Định
 
-Hệ thống tự tạo tài khoản khi khởi động lần đầu:
-
 | Vai trò | Username | Password | Quyền hạn |
 |---------|----------|----------|-----------|
-| Admin | `admin` | `admin123` | Toàn quyền CRUD |
-| Staff | `staff` | `staff123` | Chỉ xem (GET) |
+| Admin | `admin` | `admin123` | Toàn quyền |
+| Staff | `staff` | `staff123` | Xem + export |
 
-> **Lưu ý**: Đổi mật khẩu mặc định khi triển khai production!
+> **Lưu ý**: Đổi mật khẩu mặc định sau khi cài đặt!
 
-### Dữ liệu mẫu (seed data)
-
-Khi khởi động lần đầu, hệ thống tự tạo dữ liệu test:
-
-- **3 Khoa**: Công nghệ Thông tin, Điện tử Viễn thông, Quản trị Kinh doanh
-- **5 Giảng viên**: Phân bổ trong các khoa
-- **10 Lịch giảng dạy**: Lịch mẫu cho học kỳ HK1 - 2025
+**Dữ liệu mẫu tự động tạo:**
+- 2 tài khoản (admin, staff)
+- 3 khoa (CNTT, ĐTVT, QTKD)
+- 5 giảng viên phân bổ theo khoa
+- 10 lịch giảng dạy học kỳ HK1-2025
 
 ---
 
-## Tính Năng Nâng Cao
+## Tính Năng
 
-| Tính năng | Trạng thái | Mô tả |
-|-----------|-----------|-------|
-| JWT Auth | Có | Xác thực bằng JSON Web Token |
-| RBAC (2 roles) | Có | Phân quyền Admin / Staff |
-| Logging | Có | Ghi log hệ thống (file + console) |
-| Audit Logs | Có | Lịch sử đăng nhập/chỉnh sửa/xóa |
-| Export Excel | Có | Xuất danh sách GV ra .xlsx |
-| Export PDF | Có | Xuất danh sách GV ra .pdf |
-| Thống kê | Có | Theo khoa, học vị, chức vụ |
-| Quản lý TK | Có | CRUD + khóa/mở tài khoản |
-| Backup/Restore | Có | Sao lưu/phục hồi database |
-| Docker | Có | docker-compose cho backend + MySQL |
-| Seed Data | Có | Dữ liệu mẫu tự động |
-| Search & Filter | Có | Tìm kiếm, lọc theo khoa/học vị/chức vụ |
-| Pagination | Có | Phân trang danh sách |
-
----
-
-## Đối Tượng Sử Dụng
-
-| Đối tượng | Role | Mô tả |
-|-----------|------|-------|
-| Quản trị viên hệ thống | admin | Quản lý toàn bộ hệ thống |
-| Phòng nhân sự | staff | Xem thông tin, xuất báo cáo |
-| Ban giám hiệu | staff | Xem thống kê, báo cáo |
----
-
-## Ghi Chú Phát Triển
-
-### Quy tắc code
-
-- Tất cả code có **comment tiếng Việt** rõ ràng
-- Backend: tách rõ Router → Service → Model
-- Frontend: tách rõ Screen → API Client → UI Component
-- Validate dữ liệu bằng Pydantic (backend) trước khi lưu DB
-- Xử lý lỗi trả về đúng HTTP status code
-
-### Mở rộng trong tương lai
-
-- Quản lý sinh viên
-- Quản lý đề tài nghiên cứu khoa học
-- Thống kê báo cáo nâng cao (biểu đồ)
-- Thông báo real-time (WebSocket)
-- Hệ thống backup tự động
+| Tính năng | Mô tả |
+|-----------|-------|
+| bcrypt Auth | Xác thực mật khẩu an toàn |
+| RBAC 2 roles | Phân quyền Admin / Staff |
+| App Session | Singleton lưu user đăng nhập trong bộ nhớ |
+| Logging | Ghi log ra file + console |
+| Audit Logs | Lịch sử login / edit / delete |
+| Export Excel | Xuất danh sách GV ra .xlsx |
+| Export PDF | Xuất danh sách GV ra .pdf |
+| Thống kê | Theo khoa, học vị, chức vụ |
+| Quản lý TK | CRUD + khóa/mở tài khoản |
+| Backup/Restore | Sao lưu/phục hồi database |
+| Seed Data | Dữ liệu mẫu tự động |
+| Search & Filter | Tìm kiếm, lọc nhiều tiêu chí |
+| Pagination | Phân trang danh sách |
+| Conflict Check | Kiểm tra trùng lịch giảng dạy |
 
 ---
 
@@ -266,6 +223,7 @@ ví dụ:
 
 ![Sao Lưu & Phục Hồi Dữ Liệu](assets/SaoLuu_PhucHoi.png)   
 Sao Lưu & Phục Hồi Dữ Liệu 
+<<<<<<< HEAD
 
 ![Thêm Khoa](assets/Themkhoa.jpg)   
 Thêm Khoa
@@ -281,25 +239,26 @@ Thêm Lịch Giảng Dạy
 
 ![Quản Lý Tài Khoản](assets/Quanlytaikhoan.jpg)
 Quản Lý Tài Khoản
+=======
+>>>>>>> c7f0427af015f136b04f3116cfc16edbfd1d088f
 
 ![Giao diện đăng nhập](assets/Giaodiendangnhap.png)
-Giao diện đăng nhập
 
 ![Main Window & Sidebar](assets/MainWindow&Sidebar.png)
-Main Window & Sidebar
 
-![SideBar chi tiết](Sidebarchitiet.png)
+![SideBar chi tiết](assets/Sidebarchitiet.png)
 
-![Thêm sửa giảng viên](ThemSuaGiangVien.png)
+![Thêm sửa giảng viên](assets/ThemSuaGiangVien.png)
 
-![Xem chi tiết giảng viên](XemChiTietGiangVien.png)
+![Xem chi tiết giảng viên](assets/XemChiTietGiangVien.png)
 
 
 ## Contributor
 
-- xyanua. - maintainer & developer
-- Huy12-05 - developer
-- pmhieu2004 - developer
+- xyanua. — maintainer & developer
+- Huy12-05 — developer
+- pmhieu2004 — developer
+
 ## License
 
 MIT License — Free for educational and commercial use.
