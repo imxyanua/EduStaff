@@ -281,11 +281,12 @@ Giao diện đăng nhập
 Main Window & Sidebar
 
 ![SideBar chi tiết](Sidebarchitiet.png)
+Side Bar
 
 ![Thêm sửa giảng viên](ThemSuaGiangVien.png)
-
+Thêm sửa giảng viên
 ![Xem chi tiết giảng viên](XemChiTietGiangVien.png)
-
+Xem chi tiết giảng viên
 
 ## Contributor
 
