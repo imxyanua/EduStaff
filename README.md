@@ -112,211 +112,6 @@ Hệ thống được tách thành **2 service độc lập**, giao tiếp qua H
 
 ---
 
-## Cấu Trúc Dự Án
-
-```
-EduStaff/
-│
-├── backend/                        # ── Backend Service (FastAPI REST API) ──
-│   ├── main.py                     # Entry point: khởi tạo app, middleware, router
-│   ├── config.py                   # Cấu hình (DB URL, JWT secret, ...)
-│   ├── database.py                 # SQLAlchemy engine, session, Base
-│   ├── requirements.txt            # Python dependencies
-│   ├── Dockerfile                  # Docker image cho backend
-│   ├── .env                        # Biến môi trường (không commit)
-│   ├── .env.example                # Template biến môi trường
-│   │
-│   ├── models/                     # SQLAlchemy ORM Models
-│   │   ├── __init__.py
-│   │   ├── account.py              # Bảng accounts (tài khoản đăng nhập)
-│   │   ├── department.py           # Bảng departments (khoa/bộ môn)
-│   │   ├── lecturer.py             # Bảng lecturers (giảng viên)
-│   │   ├── teaching_schedule.py    # Bảng teaching_schedule (lịch dạy)
-│   │   └── audit_log.py            # Bảng audit_logs (nhật ký hệ thống)
-│   │
-│   ├── schemas/                    # Pydantic Schemas (validate request/response)
-│   │   ├── __init__.py
-│   │   ├── auth.py                 # LoginRequest, TokenResponse
-│   │   ├── department.py           # DepartmentCreate, DepartmentUpdate, ...
-│   │   ├── lecturer.py             # LecturerCreate, LecturerUpdate, ...
-│   │   ├── schedule.py             # ScheduleCreate, ScheduleUpdate, ...
-│   │   ├── account.py              # AccountCreate, AccountUpdate, ...
-│   │   ├── stats.py                # StatsOverview, StatsByDepartment, ...
-│   │   └── audit_log.py            # AuditLogResponse, AuditLogFilter
-│   │
-│   ├── routers/                    # API Route handlers
-│   │   ├── __init__.py
-│   │   ├── auth.py                 # POST /login, GET /me
-│   │   ├── departments.py          # CRUD /departments
-│   │   ├── lecturers.py            # CRUD /lecturers + export excel/pdf
-│   │   ├── schedules.py            # CRUD /schedules
-│   │   ├── accounts.py             # CRUD /accounts + toggle active
-│   │   ├── stats.py                # GET /stats/*
-│   │   ├── audit_logs.py           # GET /audit-logs
-│   │   └── backup.py               # POST /backup/create, /backup/restore
-│   │
-│   └── services/                   # Business Logic Layer
-│       ├── __init__.py
-│       ├── auth_service.py         # JWT, password hashing, authentication
-│       ├── department_service.py   # CRUD logic cho departments
-│       ├── lecturer_service.py     # CRUD logic cho lecturers + excel/pdf export
-│       ├── schedule_service.py     # CRUD logic cho schedules + conflict check
-│       ├── account_service.py      # CRUD logic cho accounts + toggle active
-│       ├── stats_service.py        # Thống kê theo khoa, học vị, chức vụ
-│       ├── audit_service.py        # Ghi và truy vấn audit logs
-│       └── backup_service.py       # mysqldump backup + restore
-│
-├── frontend/                       # ── Frontend Service (PySide6 Desktop) ──
-│   ├── main.py                     # Entry point: QApplication, theme, window
-│   ├── requirements.txt            # Python dependencies
-│   │
-│   ├── api/                        # HTTP API Client Layer
-│   │   ├── __init__.py
-│   │   ├── client.py               # Base HTTP client (requests wrapper + JWT)
-│   │   ├── auth_api.py             # Login, get current user
-│   │   ├── department_api.py       # CRUD departments
-│   │   ├── lecturer_api.py         # CRUD lecturers
-│   │   ├── schedule_api.py         # CRUD schedules
-│   │   ├── account_api.py          # CRUD accounts
-│   │   ├── stats_api.py            # Thống kê
-│   │   └── audit_api.py            # Audit logs
-│   │
-│   ├── ui/                         # UI Utilities & Theme
-│   │   ├── __init__.py
-│   │   ├── styles.py               # QSS dark theme stylesheet
-│   │   └── components.py           # Reusable widgets (buttons, tables, inputs...)
-│   │
-│   └── screens/                    # Application Screens
-│       ├── __init__.py
-│       ├── login_screen.py         # Màn hình đăng nhập
-│       ├── main_window.py          # Main window + sidebar navigation
-│       ├── dashboard_screen.py     # Dashboard thống kê
-│       ├── lecturer_screen.py      # Quản lý giảng viên
-│       ├── department_screen.py    # Quản lý khoa
-│       ├── schedule_screen.py      # Quản lý lịch giảng dạy
-│       ├── account_screen.py       # Quản lý tài khoản (admin only)
-│       └── audit_log_screen.py     # Xem nhật ký hệ thống (admin only)
-│
-├── docker-compose.yml              # Docker: MySQL + Backend
-└── README.md                       # Tài liệu dự án
-```
-
----
-
-## Thiết Kế Database
-
-### Sơ đồ quan hệ (ERD)
-
-```
-┌──────────────────┐       ┌──────────────────────────┐       ┌──────────────────────────┐
-│   departments    │       │       lecturers           │       │   teaching_schedule      │
-├──────────────────┤       ├──────────────────────────┤       ├──────────────────────────┤
-│ id          PK   │───┐   │ id              PK       │───┐   │ id              PK       │
-│ name        UQ   │   │   │ employee_code   UQ       │   │   │ lecturer_id     FK       │
-│ code        UQ   │   └──►│ full_name                │   └──►│ subject_name             │
-│ description      │       │ email           UQ       │       │ subject_code             │
-│ created_at       │       │ phone                    │       │ room                     │
-│ updated_at       │       │ gender                   │       │ day_of_week              │
-└──────────────────┘       │ date_of_birth            │       │ start_time               │
-                           │ degree                   │       │ end_time                 │
-┌──────────────────┐       │ position                 │       │ semester                 │
-│    accounts      │       │ department_id   FK       │       │ academic_year            │
-├──────────────────┤       │ hire_date                │       │ created_at               │
-│ id          PK   │       │ status                   │       │ updated_at               │
-│ username    UQ   │       │ created_at               │       └──────────────────────────┘
-│ password_hash    │       │ updated_at               │
-│ full_name        │       └──────────────────────────┘
-│ role             │                                          ┌──────────────────────────┐
-│ is_active        │                                          │     audit_logs           │
-│ created_at       │                                          ├──────────────────────────┤
-│ updated_at       │                                          │ id              PK       │
-└──────────────────┘                                          │ user_id         FK       │
-                                                              │ action                   │
-                                                              │ entity_type              │
-                                                              │ entity_id                │
-                                                              │ details                  │
-                                                              │ ip_address               │
-                                                              │ created_at               │
-                                                              └──────────────────────────┘
-```
-
-### Chi tiết bảng
-
-#### `departments` — Khoa / Bộ môn
-
-| Cột | Kiểu | Ràng buộc | Mô tả |
-|-----|------|-----------|-------|
-| id | INT | PK, AUTO_INCREMENT | Mã khoa |
-| name | VARCHAR(100) | NOT NULL, UNIQUE | Tên khoa |
-| code | VARCHAR(20) | NOT NULL, UNIQUE | Mã viết tắt (VD: CNTT, DTVT) |
-| description | TEXT | NULLABLE | Mô tả |
-| created_at | DATETIME | DEFAULT NOW | Ngày tạo |
-| updated_at | DATETIME | ON UPDATE NOW | Ngày cập nhật |
-
-#### `accounts` — Tài khoản đăng nhập
-
-| Cột | Kiểu | Ràng buộc | Mô tả |
-|-----|------|-----------|-------|
-| id | INT | PK, AUTO_INCREMENT | Mã tài khoản |
-| username | VARCHAR(50) | NOT NULL, UNIQUE | Tên đăng nhập |
-| password_hash | VARCHAR(255) | NOT NULL | Mật khẩu đã hash (bcrypt) |
-| full_name | VARCHAR(100) | NOT NULL | Họ tên người dùng |
-| role | ENUM('admin','staff') | NOT NULL, DEFAULT 'staff' | Vai trò |
-| is_active | BOOLEAN | DEFAULT TRUE | Trạng thái hoạt động |
-| created_at | DATETIME | DEFAULT NOW | Ngày tạo |
-| updated_at | DATETIME | ON UPDATE NOW | Ngày cập nhật |
-
-#### `lecturers` — Giảng viên
-
-| Cột | Kiểu | Ràng buộc | Mô tả |
-|-----|------|-----------|-------|
-| id | INT | PK, AUTO_INCREMENT | Mã GV |
-| employee_code | VARCHAR(20) | NOT NULL, UNIQUE | Mã nhân viên (VD: GV001) |
-| full_name | VARCHAR(100) | NOT NULL | Họ tên |
-| email | VARCHAR(100) | NOT NULL, UNIQUE | Email |
-| phone | VARCHAR(15) | NULLABLE | Số điện thoại |
-| gender | ENUM('male','female','other') | NOT NULL | Giới tính |
-| date_of_birth | DATE | NULLABLE | Ngày sinh |
-| degree | VARCHAR(20) | NOT NULL | Học vị (ThS, TS, PGS, GS) |
-| position | VARCHAR(50) | NULLABLE | Chức vụ (Trưởng khoa, Phó khoa, GV...) |
-| department_id | INT | FK → departments.id | Khoa |
-| hire_date | DATE | NOT NULL | Ngày vào làm |
-| status | ENUM('active','inactive','on_leave') | DEFAULT 'active' | Trạng thái |
-| created_at | DATETIME | DEFAULT NOW | Ngày tạo |
-| updated_at | DATETIME | ON UPDATE NOW | Ngày cập nhật |
-
-#### `teaching_schedule` — Lịch giảng dạy
-
-| Cột | Kiểu | Ràng buộc | Mô tả |
-|-----|------|-----------|-------|
-| id | INT | PK, AUTO_INCREMENT | Mã lịch |
-| lecturer_id | INT | FK → lecturers.id | Giảng viên |
-| subject_name | VARCHAR(100) | NOT NULL | Tên môn học |
-| subject_code | VARCHAR(20) | NOT NULL | Mã môn học |
-| room | VARCHAR(20) | NOT NULL | Phòng học |
-| day_of_week | ENUM('Mon','Tue','Wed','Thu','Fri','Sat','Sun') | NOT NULL | Thứ |
-| start_time | TIME | NOT NULL | Giờ bắt đầu |
-| end_time | TIME | NOT NULL | Giờ kết thúc |
-| semester | VARCHAR(20) | NOT NULL | Học kỳ (VD: HK1, HK2) |
-| academic_year | INT | NOT NULL | Năm học (VD: 2025) |
-| created_at | DATETIME | DEFAULT NOW | Ngày tạo |
-| updated_at | DATETIME | ON UPDATE NOW | Ngày cập nhật |
-
-#### `audit_logs` — Nhật ký hệ thống
-
-| Cột | Kiểu | Ràng buộc | Mô tả |
-|-----|------|-----------|-------|
-| id | INT | PK, AUTO_INCREMENT | Mã log |
-| user_id | INT | FK → accounts.id | Ai thực hiện |
-| action | VARCHAR(20) | NOT NULL | login, create, update, delete |
-| entity_type | VARCHAR(50) | NULLABLE | lecturer, department, schedule, account |
-| entity_id | INT | NULLABLE | ID đối tượng bị tác động |
-| details | TEXT | NULLABLE | JSON mô tả chi tiết thay đổi |
-| ip_address | VARCHAR(45) | NULLABLE | IP client |
-| created_at | DATETIME | DEFAULT NOW | Thời điểm |
-
----
-
 ## Phân Quyền Hệ Thống
 
 ### 2 Vai trò (Roles)
@@ -330,16 +125,16 @@ EduStaff/
 
 | Chức năng | admin | staff |
 |-----------|-------|-------|
-| CRUD giảng viên | ✅ | ❌ |
-| CRUD khoa | ✅ | ❌ |
-| CRUD lịch giảng dạy | ✅ | ❌ |
-| CRUD tài khoản | ✅ | ❌ |
-| Xem danh sách GV, khoa, lịch | ✅ | ✅ |
-| Export Excel / PDF | ✅ | ✅ |
-| Xem thống kê | ✅ | ✅ |
-| Xem audit logs | ✅ | ❌ |
-| Backup / Restore | ✅ | ❌ |
-| Khóa/mở tài khoản | ✅ | ❌ |
+| CRUD giảng viên | yes | no |
+| CRUD khoa | yes | no |
+| CRUD lịch giảng dạy | yes | no |
+| CRUD tài khoản | yes | no |
+| Xem danh sách GV, khoa, lịch | yes | yes |
+| Export Excel / PDF | yes | yes |
+| Xem thống kê | yes | yes |
+| Xem audit logs | yes | no |
+| Backup / Restore | yes | no |
+| Khóa/mở tài khoản | yes | no |
 
 ---
 
@@ -349,8 +144,8 @@ EduStaff/
 
 | Method | Endpoint | Auth | Mô tả |
 |--------|----------|------|--------|
-| POST | `/api/auth/login` | ❌ | Đăng nhập, trả JWT token |
-| GET | `/api/auth/me` | ✅ all | Lấy thông tin user hiện tại |
+| POST | `/api/auth/login` | no | Đăng nhập, trả JWT token |
+| GET | `/api/auth/me` | yes | Lấy thông tin user hiện tại |
 
 ### Departments — Khoa
 
@@ -459,18 +254,10 @@ Filter params: `?search=&department_id=&degree=&position=&status=&page=&size=`
 ```bash
 git clone https://github.com/imxyanua/EduStaff.git
 cd EduStaff
+
 ```
 
-### 2. Tạo database MySQL
-
-```sql
-CREATE DATABASE edustaff CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER 'edustaff'@'localhost' IDENTIFIED BY 'edustaff_password';
-GRANT ALL PRIVILEGES ON edustaff.* TO 'edustaff'@'localhost';
-FLUSH PRIVILEGES;
-```
-
-### 3. Cài đặt Backend
+### 2. Cài đặt Backend
 
 ```bash
 cd backend
@@ -591,32 +378,17 @@ Khi khởi động lần đầu, hệ thống tự tạo dữ liệu test:
 | Phòng nhân sự | staff | Xem thông tin, xuất báo cáo |
 | Ban giám hiệu | staff | Xem thống kê, báo cáo |
 
+
 ---
-
-## Ghi Chú Phát Triển
-
-### Quy tắc code
-
-- Tất cả code có **comment tiếng Việt** rõ ràng
-- Backend: tách rõ Router → Service → Model
-- Frontend: tách rõ Screen → API Client → UI Component
-- Validate dữ liệu bằng Pydantic (backend) trước khi lưu DB
-- Xử lý lỗi trả về đúng HTTP status code
-- Mọi thao tác CRUD đều ghi audit log
-
-### Mở rộng trong tương lai
-
-- Quản lý sinh viên
-- Quản lý đề tài nghiên cứu khoa học
-- Thống kê báo cáo nâng cao (biểu đồ)
-- Thông báo real-time (WebSocket)
-- Hệ thống backup tự động (scheduled)
-
+## Hình ảnh phác họa giao diện chính của ứng dụng:  
+![text](assets/Dashboard.png) ![text](assets/Giaodiendangnhap.png) ![text](assets/MainWindow&Sidebar.png) ![text](assets/QuanLyGiangVien.png) ![text](assets/Quanlykhoa.jpg) ![text](assets/Quanlylichgiangday.jpg) ![text](assets/Quanlytaikhoan.jpg) ![text](assets/SaoLuu_PhucHoi.png) ![text](assets/Sidebarchitiet.png) ![text](assets/Themkhoa.jpg) ![text](assets/Themlichgiangday.jpg) ![text](assets/ThemSuaGiangVien.png) ![text](assets/XemChiTietGiangVien.png)
 ---
 
 ## Contributor
 
-- xyanua. - maintainer & developer
+- xyanua. - maintainer & developer  
+- pmhieu2004 - contributor
+- Huy12-05 - contributor
 
 ## License
 
