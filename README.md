@@ -266,6 +266,13 @@ ví dụ:
 
 ![Sao Lưu & Phục Hồi Dữ Liệu](assets/SaoLuu_PhucHoi.png)   
 Sao Lưu & Phục Hồi Dữ Liệu 
+![Thêm Khoa](assets/Themkhoa.png)   
+Sao Lưu & Phục Hồi Dữ Liệu 
+![Quản Lý Khoa](assets/Quanlykhoa.png)
+![Quản Lý Lịch Giảng Dạy](assets/Quanlylichgiangday.png)
+![Thêm Lịch Giảng Dạy](assets/themlichgiangday.png)
+![Quản Lý Tài Khoản](assets/Quanlytaikhoan.png)
+Sao Lưu & Phục Hồi Dữ Liệu 
 
 
 ## Contributor
