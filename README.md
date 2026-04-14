@@ -266,13 +266,21 @@ ví dụ:
 
 ![Sao Lưu & Phục Hồi Dữ Liệu](assets/SaoLuu_PhucHoi.png)   
 Sao Lưu & Phục Hồi Dữ Liệu 
-![Thêm Khoa](assets/Themkhoa.png)   
-Sao Lưu & Phục Hồi Dữ Liệu 
-![Quản Lý Khoa](assets/Quanlykhoa.png)
-![Quản Lý Lịch Giảng Dạy](assets/Quanlylichgiangday.png)
-![Thêm Lịch Giảng Dạy](assets/themlichgiangday.png)
-![Quản Lý Tài Khoản](assets/Quanlytaikhoan.png)
-Sao Lưu & Phục Hồi Dữ Liệu 
+
+![Thêm Khoa](assets/Themkhoa.jpg)   
+Thêm Khoa
+ 
+![Quản Lý Khoa](assets/Quanlykhoa.jpg)
+Quản Lý Khoa
+
+![Quản Lý Lịch Giảng Dạy](assets/Quanlylichgiangday.jpg)
+Quản Lý Lịch Giảng Dạy
+
+![Thêm Lịch Giảng Dạy](assets/themlichgiangday.jpg)
+Thêm Lịch Giảng Dạy
+
+![Quản Lý Tài Khoản](assets/Quanlytaikhoan.jpg)
+Quản Lý Tài Khoản
 
 ![Giao diện đăng nhập](assets/Giaodiendangnhap.png)
 Giao diện đăng nhập
