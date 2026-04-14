@@ -213,15 +213,27 @@ Khi khởi động, `main.py` lần lượt thực hiện:
 
 ---
 
-## Giao Diện
+### Hình ảnh phác thảo (chèn vào đây)   
+Vào GitHub repo
+
+Add file → Upload files
+
+Upload ảnh vào assets/images
+ví dụ:  
+
+![Sao Lưu & Phục Hồi Dữ Liệu](assets/SaoLuu_PhucHoi.png)   
+Sao Lưu & Phục Hồi Dữ Liệu 
 
 ![Giao diện đăng nhập](assets/Giaodiendangnhap.png)
 
 ![Main Window & Sidebar](assets/MainWindow&Sidebar.png)
 
-![Sao Lưu & Phục Hồi Dữ Liệu](assets/SaoLuu_PhucHoi.png)
+![SideBar chi tiết](Sidebarchitiet.png)
 
----
+![Thêm sửa giảng viên](ThemSuaGiangVien.png)
+
+![Xem chi tiết giảng viên](XemChiTietGiangVien.png)
+
 
 ## Contributor
 
