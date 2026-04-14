@@ -228,11 +228,11 @@ Sao Lưu & Phục Hồi Dữ Liệu
 
 ![Main Window & Sidebar](assets/MainWindow&Sidebar.png)
 
-![SideBar chi tiết](Sidebarchitiet.png)
+![SideBar chi tiết](assets/Sidebarchitiet.png)
 
-![Thêm sửa giảng viên](ThemSuaGiangVien.png)
+![Thêm sửa giảng viên](assets/ThemSuaGiangVien.png)
 
-![Xem chi tiết giảng viên](XemChiTietGiangVien.png)
+![Xem chi tiết giảng viên](assets/XemChiTietGiangVien.png)
 
 
 ## Contributor
